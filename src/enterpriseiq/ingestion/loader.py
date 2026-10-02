@@ -146,7 +146,13 @@ def load_markdown_document(path: str | Path) -> EnterpriseDocument:
             f"unsupported document type: {source_path.suffix or '<none>'}"
         )
 
-    raw_text = source_path.read_text(encoding="utf-8-sig")
+    try:
+        raw_text = source_path.read_text(encoding="utf-8-sig")
+    except UnicodeDecodeError as exc:
+        raise DocumentLoadError(
+            f"document must be valid UTF-8: {source_path}"
+        ) from exc
+
     metadata, body = parse_front_matter(raw_text)
 
     _validate_required_metadata(metadata)
@@ -220,3 +226,4 @@ def load_document_directory(
         seen_ids[document.document_id] = document.source_path
 
     return documents
+

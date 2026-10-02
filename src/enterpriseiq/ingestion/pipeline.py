@@ -189,6 +189,11 @@ def run_ingestion(
         len(documents),
     )
 
+    if not documents:
+        raise ValueError(
+            f"no Markdown documents found in source directory: {source_path}"
+        )
+
     chunks = chunk_documents(documents, resolved_config)
 
     if not chunks:
@@ -246,3 +251,4 @@ def run_ingestion(
 def result_to_dict(result: IngestionResult) -> dict[str, Any]:
     """Return a JSON-friendly representation of an ingestion result."""
     return _json_value(asdict(result))
+
