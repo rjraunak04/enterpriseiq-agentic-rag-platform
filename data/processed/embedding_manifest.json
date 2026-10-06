@@ -1,0 +1,12 @@
+{
+  "batch_size": 32,
+  "chunk_count": 27,
+  "dimension": 384,
+  "embedding_output": "data\\processed\\embeddings.jsonl",
+  "model_name": "enterpriseiq-deterministic-v1",
+  "normalize": true,
+  "output_sha256": "f7f467ceda500c0786665d15683966261c32a03c0d0df161c5872417fa526699",
+  "provider": "deterministic",
+  "schema_version": 1,
+  "source_chunks": "data\\processed\\chunks.jsonl"
+}
