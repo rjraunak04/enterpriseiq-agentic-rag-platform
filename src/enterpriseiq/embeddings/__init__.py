@@ -6,10 +6,18 @@ from enterpriseiq.embeddings.contracts import (
     EmbeddingProvider,
     Vector,
 )
+from enterpriseiq.embeddings.factory import create_embedding_provider
+from enterpriseiq.embeddings.providers import (
+    DeterministicEmbeddingProvider,
+    SentenceTransformerEmbeddingProvider,
+)
 
 __all__ = [
+    "DeterministicEmbeddingProvider",
     "EmbeddedChunk",
     "EmbeddingConfig",
     "EmbeddingProvider",
+    "SentenceTransformerEmbeddingProvider",
     "Vector",
+    "create_embedding_provider",
 ]
