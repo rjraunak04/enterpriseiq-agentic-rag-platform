@@ -14,6 +14,14 @@ from enterpriseiq.retrieval.lexical import (
     tokenize,
 )
 from enterpriseiq.retrieval.models import SearchResult
+from enterpriseiq.retrieval.reranking import (
+    DeterministicReranker,
+    RerankedRetriever,
+    Reranker,
+    RerankingConfig,
+    RerankingError,
+    tokenize_for_reranking,
+)
 from enterpriseiq.retrieval.semantic import (
     RetrievalError,
     SearchFilters,
@@ -34,7 +42,12 @@ __all__ = [
     "HybridRetrievalError",
     "HybridRetriever",
     "LexicalRetrievalError",
+    "DeterministicReranker",
     "PersistentVectorIndex",
+    "RerankedRetriever",
+    "Reranker",
+    "RerankingConfig",
+    "RerankingError",
     "RetrievalError",
     "SearchFilters",
     "SearchResult",
@@ -46,4 +59,5 @@ __all__ = [
     "reciprocal_rank",
     "reciprocal_rank_fusion",
     "tokenize",
+    "tokenize_for_reranking",
 ]
