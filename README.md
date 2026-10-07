@@ -15,3 +15,9 @@ Retrieval supports department, classification, document-type, and document-ID fi
 Architecture: docs/architecture/vector-retrieval-architecture.md
 
 **Status:** Day 01 complete | Day 02 complete | Day 03 next: Advanced Retrieval + Evaluation
+
+## Advanced Retrieval & Evaluation
+
+EnterpriseIQ includes an offline-evaluated retrieval stack with BM25 lexical retrieval, dense semantic retrieval, Reciprocal Rank Fusion, pluggable reranking, metadata filtering, a versioned 15-query enterprise benchmark, Hit@K / Precision@K / Recall@K / MRR / nDCG evaluation, deterministic system comparison, JSON reports, and regression quality gates.
+
+Retrieval quality is evaluated independently before LLM answer generation. See docs/architecture/advanced-retrieval-evaluation.md.
