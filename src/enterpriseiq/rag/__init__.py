@@ -5,6 +5,12 @@ from enterpriseiq.rag.context import (
     ContextConfig,
     EvidenceContextBuilder,
 )
+from enterpriseiq.rag.generation import (
+    AnswerGenerator,
+    DeterministicAnswerGenerator,
+    DeterministicGeneratorConfig,
+    GenerationError,
+)
 from enterpriseiq.rag.models import (
     Citation,
     EvidenceContext,
@@ -24,15 +30,19 @@ from enterpriseiq.rag.prompt import (
 )
 
 __all__ = [
+    "AnswerGenerator",
     "Citation",
     "ContextAssemblyError",
     "ContextConfig",
     "DEFAULT_ABSTENTION_TEXT",
     "DEFAULT_SYSTEM_POLICY",
+    "DeterministicAnswerGenerator",
+    "DeterministicGeneratorConfig",
     "EvidenceContext",
     "EvidenceContextBuilder",
     "EvidenceItem",
     "GeneratedAnswer",
+    "GenerationError",
     "GroundedPrompt",
     "GroundedPromptBuilder",
     "GroundedResponse",
