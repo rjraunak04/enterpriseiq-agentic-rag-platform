@@ -25,6 +25,12 @@ from enterpriseiq.rag.models import (
     RAGContractError,
     RAGQuery,
 )
+from enterpriseiq.rag.pipeline import (
+    GroundedRAGPipeline,
+    RAGPipelineConfig,
+    RAGPipelineError,
+    RAGRetriever,
+)
 from enterpriseiq.rag.prompt import (
     DEFAULT_ABSTENTION_TEXT,
     DEFAULT_SYSTEM_POLICY,
@@ -53,9 +59,13 @@ __all__ = [
     "GenerationError",
     "GroundedPrompt",
     "GroundedPromptBuilder",
+    "GroundedRAGPipeline",
     "GroundedResponse",
     "PromptConfig",
     "PromptConstructionError",
     "RAGContractError",
+    "RAGPipelineConfig",
+    "RAGPipelineError",
     "RAGQuery",
+    "RAGRetriever",
 ]
