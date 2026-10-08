@@ -1,5 +1,10 @@
 """Grounded retrieval-augmented generation contracts."""
 
+from enterpriseiq.rag.citations import (
+    CitationValidationError,
+    CitationValidationResult,
+    CitationValidator,
+)
 from enterpriseiq.rag.context import (
     ContextAssemblyError,
     ContextConfig,
@@ -32,6 +37,9 @@ from enterpriseiq.rag.prompt import (
 __all__ = [
     "AnswerGenerator",
     "Citation",
+    "CitationValidationError",
+    "CitationValidationResult",
+    "CitationValidator",
     "ContextAssemblyError",
     "ContextConfig",
     "DEFAULT_ABSTENTION_TEXT",
