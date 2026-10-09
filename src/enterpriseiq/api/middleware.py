@@ -12,6 +12,7 @@ from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 
 from enterpriseiq.api.config import APIConfig
+from enterpriseiq.api.metrics import MetricsRegistry
 
 _request_id: ContextVar[str | None] = ContextVar("enterpriseiq_request_id", default=None)
 logger = logging.getLogger("enterpriseiq.api")
@@ -42,9 +43,16 @@ def log_event(event: str, **fields: object) -> None:
 class RequestContextMiddleware(BaseHTTPMiddleware):
     """Attach correlation IDs and emit payload-safe request logs."""
 
-    def __init__(self, app: object, *, config: APIConfig) -> None:
+    def __init__(
+        self,
+        app: object,
+        *,
+        config: APIConfig,
+        metrics: MetricsRegistry,
+    ) -> None:
         super().__init__(app)
         self.config = config
+        self.metrics = metrics
 
     async def dispatch(
         self,
@@ -63,7 +71,14 @@ class RequestContextMiddleware(BaseHTTPMiddleware):
             log_event("request_failed", method=request.method, path=request.url.path)
             raise
         else:
-            duration_ms = round((time.perf_counter() - started) * 1000, 3)
+            duration_seconds = time.perf_counter() - started
+            duration_ms = round(duration_seconds * 1000, 3)
+            self.metrics.observe(
+                method=request.method,
+                path=request.url.path,
+                status_code=response.status_code,
+                duration_seconds=duration_seconds,
+            )
             response.headers[self.config.request_id_header] = request_id
             log_event(
                 "request_completed",
