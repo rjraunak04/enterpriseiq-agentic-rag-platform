@@ -34,3 +34,31 @@ boundary.
 
 See [`docs/agentic-rag-architecture.md`](docs/agentic-rag-architecture.md)
 for the complete agentic RAG architecture.
+
+## FastAPI Service, Demo, and Observability
+
+EnterpriseIQ exposes the agentic RAG runtime through a production-oriented
+FastAPI boundary with strict request/response contracts, correlation IDs,
+structured logging, operational metrics, and sanitized failures.
+
+Key service surfaces:
+
+- `/v1/health` and `/v1/ready` for service health
+- `/v1/agent` for grounded agent execution
+- `/v1/metrics` for Prometheus-compatible request/error/latency metrics
+- `/demo` for a lightweight recruiter-facing browser interface
+- `/docs` for interactive OpenAPI documentation when enabled
+
+The HTTP layer applies configurable query limits, offloads synchronous agent
+execution from the async event loop, adds defensive browser security headers,
+and does not enable permissive CORS by default. Logs and metrics avoid query
+payloads and use request correlation IDs for operational tracing.
+
+Run locally:
+
+```bash
+uvicorn enterpriseiq.api.app:app --reload
+```
+
+See [`docs/service-architecture.md`](docs/service-architecture.md) for the
+Day-06 service architecture and operational boundaries.
