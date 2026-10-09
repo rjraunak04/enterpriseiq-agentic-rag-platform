@@ -7,10 +7,15 @@ name = "enterpriseiq"
 version = "0.1.0"
 description = "Enterprise-grade agentic RAG platform for grounded knowledge retrieval, tool calling, and citation-backed decision intelligence."
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+    "fastapi>=0.115,<1.0",
+    "pydantic>=2.10,<3.0",
+    "uvicorn[standard]>=0.34,<1.0",
+]
 
 [project.optional-dependencies]
 dev = [
+    "httpx>=0.28,<1.0",
     "pytest>=8.0",
     "ruff>=0.6",
 ]
