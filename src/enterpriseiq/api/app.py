@@ -13,6 +13,7 @@ from enterpriseiq.api.agent import router as agent_router
 from enterpriseiq.api.config import APIConfig
 from enterpriseiq.api.dependencies import ServiceContainer
 from enterpriseiq.api.health import router as health_router
+from enterpriseiq.api.middleware import RequestContextMiddleware, get_request_id, log_event
 from enterpriseiq.api.models import ErrorResponse
 
 
@@ -76,6 +77,11 @@ def create_app(
     app.state.api_config = resolved_config
     app.state.service_container = resolved_container
 
+    app.add_middleware(
+        RequestContextMiddleware,
+        config=resolved_config,
+    )
+
     # Service health and readiness endpoints.
     app.include_router(
         health_router,
@@ -111,10 +117,16 @@ def create_app(
     ) -> JSONResponse:
         """Return a sanitized response for unexpected service failures."""
 
-        del request, exc
+        del request
+
+        log_event(
+            "unhandled_exception",
+            exception_type=type(exc).__name__,
+        )
 
         payload = ErrorResponse(
-            error="Internal service error."
+            error="Internal service error.",
+            request_id=get_request_id(),
         )
 
         return JSONResponse(
