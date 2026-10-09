@@ -14,6 +14,7 @@ from enterpriseiq.api.dependencies import (
     ServiceContainer,
     ServiceDependencyError,
 )
+from enterpriseiq.api.middleware import get_request_id, log_event
 from enterpriseiq.api.models import (
     AgentQueryRequest,
     AgentQueryResponse,
@@ -416,7 +417,8 @@ async def query_agent(
         agent = container.require_agent()
     except ServiceDependencyError:
         error = ErrorResponse(
-            error="Agent runtime is unavailable."
+            error="Agent runtime is unavailable.",
+            request_id=get_request_id(),
         )
 
         return JSONResponse(
@@ -431,7 +433,7 @@ async def query_agent(
             status_code=422,
             content={
                 "error": "Query must contain non-whitespace characters.",
-                "request_id": None,
+                "request_id": get_request_id(),
             },
         )
 
@@ -440,9 +442,14 @@ async def query_agent(
             agent,
             query,
         )
-    except Exception:
+    except Exception as exc:
+        log_event(
+            "agent_execution_failed",
+            exception_type=type(exc).__name__,
+        )
         error = ErrorResponse(
-            error="Agent execution failed."
+            error="Agent execution failed.",
+            request_id=get_request_id(),
         )
 
         return JSONResponse(
