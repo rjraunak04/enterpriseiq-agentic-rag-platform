@@ -233,7 +233,7 @@ def test_agent_endpoint_returns_503_without_runtime() -> None:
     assert response.status_code == 503
     assert response.json() == {
         "error": "Agent runtime is unavailable.",
-        "request_id": None,
+        "request_id": response.headers["X-Request-ID"],
     }
 
 
@@ -277,7 +277,7 @@ def test_agent_endpoint_rejects_whitespace_query() -> None:
     assert response.status_code == 422
     assert response.json() == {
         "error": "Query must contain non-whitespace characters.",
-        "request_id": None,
+        "request_id": response.headers["X-Request-ID"],
     }
 
 
@@ -385,7 +385,7 @@ def test_agent_endpoint_sanitizes_runtime_failure() -> None:
     assert response.status_code == 500
     assert response.json() == {
         "error": "Agent execution failed.",
-        "request_id": None,
+        "request_id": response.headers["X-Request-ID"],
     }
     assert "SECRET_API_KEY" not in response.text
     assert "do-not-leak" not in response.text
