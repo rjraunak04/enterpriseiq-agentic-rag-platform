@@ -1,5 +1,12 @@
 """Agentic execution primitives for EnterpriseIQ."""
 
+from enterpriseiq.agent.execution import (
+    SafeToolExecutor,
+    ToolExecutionConfig,
+    ToolExecutionError,
+    ToolExecutionRejectedError,
+    execute_tool,
+)
 from enterpriseiq.agent.knowledge_tools import (
     EnterpriseKnowledgeTools,
     KnowledgeRetriever,
@@ -52,9 +59,13 @@ __all__ = [
     "KnowledgeRetriever",
     "KnowledgeToolError",
     "RoutingConfig",
+    "SafeToolExecutor",
     "ToolCall",
     "ToolContext",
     "ToolDefinition",
+    "ToolExecutionConfig",
+    "ToolExecutionError",
+    "ToolExecutionRejectedError",
     "ToolExecutionStatus",
     "ToolHandler",
     "ToolInputError",
@@ -64,4 +75,5 @@ __all__ = [
     "ToolRegistry",
     "ToolRegistryError",
     "ToolResult",
+    "execute_tool",
 ]
