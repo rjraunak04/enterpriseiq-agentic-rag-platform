@@ -9,6 +9,7 @@ from typing import Any
 
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
+from starlette.concurrency import run_in_threadpool
 
 from enterpriseiq.api.dependencies import (
     ServiceContainer,
@@ -382,7 +383,12 @@ async def _run_agent(
 ) -> Any:
     """Execute sync or async compatible agent runtimes."""
 
-    result = agent.run(query)
+    run = agent.run
+
+    if inspect.iscoroutinefunction(run):
+        return await run(query)
+
+    result = await run_in_threadpool(run, query)
 
     if inspect.isawaitable(result):
         return await result
@@ -427,12 +433,22 @@ async def query_agent(
         )
 
     query = payload.query.strip()
+    config = request.app.state.api_config
 
     if not query:
         return JSONResponse(
             status_code=422,
             content={
                 "error": "Query must contain non-whitespace characters.",
+                "request_id": get_request_id(),
+            },
+        )
+
+    if len(query) > config.max_query_length:
+        return JSONResponse(
+            status_code=422,
+            content={
+                "error": f"Query exceeds maximum length of {config.max_query_length}.",
                 "request_id": get_request_id(),
             },
         )
