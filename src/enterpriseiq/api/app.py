@@ -11,6 +11,7 @@ from fastapi.responses import JSONResponse
 
 from enterpriseiq.api.config import APIConfig
 from enterpriseiq.api.dependencies import ServiceContainer
+from enterpriseiq.api.health import router as health_router
 from enterpriseiq.api.models import ErrorResponse
 
 
@@ -73,6 +74,11 @@ def create_app(
 
     app.state.api_config = resolved_config
     app.state.service_container = resolved_container
+
+    app.include_router(
+        health_router,
+        prefix=resolved_config.api_prefix,
+    )
 
     @app.get(
         "/",
