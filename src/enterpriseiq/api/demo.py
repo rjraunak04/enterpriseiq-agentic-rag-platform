@@ -23,7 +23,7 @@ async def demo(request: Request) -> HTMLResponse:
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>EnterpriseIQ Demo</title>
 <style>
-body{{font-family:system-ui,sans-serif;max-width:900px;margin:40px auto;padding:0 20px;background:#f6f7f9;color:#17202a}}
+body{{font-family:system-ui,sans-serif;max-width:900px;margin:40px auto;\npadding:0 20px;background:#f6f7f9;color:#17202a}}
 main{{background:white;padding:28px;border-radius:14px;box-shadow:0 8px 30px #0001}}
 textarea{{width:100%;box-sizing:border-box;min-height:110px;padding:12px}}
 button{{margin-top:10px;padding:10px 18px;cursor:pointer}}
@@ -34,7 +34,7 @@ small{{color:#667085}}
 <body><main>
 <h1>EnterpriseIQ</h1>
 <p>Grounded enterprise knowledge retrieval with controlled agent tool execution.</p>
-<textarea id="query" maxlength="{config.max_query_length}" placeholder="Ask an enterprise policy question..."></textarea>
+<textarea id="query" maxlength="{config.max_query_length}"\nplaceholder="Ask an enterprise policy question..."></textarea>
 <br><button id="run">Run grounded query</button>
 <p><small>API: {escape(endpoint)} · Max query length: {config.max_query_length}</small></p>
 <pre id="output">Ready.</pre>
@@ -46,7 +46,7 @@ document.getElementById("run").addEventListener("click",async()=>{{
  if(!query){{output.textContent="Enter a query.";return;}}
  output.textContent="Running...";
  try{{
-  const response=await fetch({endpoint!r},{{method:"POST",headers:{{"Content-Type":"application/json"}},body:JSON.stringify({{query}})}});
+  const response=await fetch({endpoint!r},{{\n   method:"POST",\n   headers:{{"Content-Type":"application/json"}},\n   body:JSON.stringify({{query}})\n  }});
   const data=await response.json();
   output.textContent=JSON.stringify(data,null,2);
  }}catch(error){{output.textContent="Request failed. Check service availability.";}}
