@@ -14,7 +14,8 @@ from enterpriseiq.api.config import APIConfig
 from enterpriseiq.api.demo import router as demo_router
 from enterpriseiq.api.dependencies import ServiceContainer
 from enterpriseiq.api.health import router as health_router
-from enterpriseiq.api.metrics import MetricsRegistry, router as metrics_router
+from enterpriseiq.api.metrics import MetricsRegistry
+from enterpriseiq.api.metrics import router as metrics_router
 from enterpriseiq.api.middleware import RequestContextMiddleware, get_request_id, log_event
 from enterpriseiq.api.models import ErrorResponse
 
