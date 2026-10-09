@@ -1,4 +1,4 @@
-﻿name: CI
+name: CI
 
 on:
   push:
@@ -40,3 +40,40 @@ jobs:
 
       - name: Test suite
         run: pytest -q
+
+      - name: Compile package
+        run: python -m compileall -q src
+
+  container:
+    name: Container smoke test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: quality
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build image
+        run: docker build -t enterpriseiq:ci .
+
+      - name: Start container
+        run: docker run -d --name enterpriseiq-ci -p 8000:8000 enterpriseiq:ci
+
+      - name: Wait for health
+        run: |
+          for attempt in {1..20}; do
+            if curl --fail --silent http://127.0.0.1:8000/v1/health; then
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs enterpriseiq-ci
+          exit 1
+
+      - name: Verify production docs policy
+        run: test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8000/docs)" = "404"
+
+      - name: Show logs on failure
+        if: failure()
+        run: docker logs enterpriseiq-ci
