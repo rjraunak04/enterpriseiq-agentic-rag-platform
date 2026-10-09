@@ -11,6 +11,7 @@ from fastapi.responses import JSONResponse
 
 from enterpriseiq.api.agent import router as agent_router
 from enterpriseiq.api.config import APIConfig
+from enterpriseiq.api.demo import router as demo_router
 from enterpriseiq.api.dependencies import ServiceContainer
 from enterpriseiq.api.health import router as health_router
 from enterpriseiq.api.metrics import MetricsRegistry, router as metrics_router
@@ -86,6 +87,8 @@ def create_app(
         metrics=metrics_registry,
     )
 
+    app.include_router(demo_router)
+
     # Service health and readiness endpoints.
     app.include_router(
         health_router,
@@ -118,6 +121,19 @@ def create_app(
             "api_prefix": resolved_config.api_prefix,
             "docs_enabled": resolved_config.expose_docs,
         }
+
+    @app.middleware("http")
+    async def security_headers(request: Request, call_next):
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["Referrer-Policy"] = "no-referrer"
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; style-src 'self' 'unsafe-inline'; "
+            "script-src 'self' 'unsafe-inline'; connect-src 'self'; "
+            "frame-ancestors 'none'"
+        )
+        return response
 
     @app.exception_handler(Exception)
     async def unhandled_exception_handler(
