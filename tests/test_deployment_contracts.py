@@ -9,7 +9,7 @@ def test_dockerfile_uses_non_root_runtime() -> None:
     dockerfile = (ROOT / "Dockerfile").read_text(encoding="utf-8")
     assert "FROM python:3.12-slim" in dockerfile
     assert "USER enterpriseiq" in dockerfile
-    assert "uvicorn enterpriseiq.api.app:app" in dockerfile
+    assert "uvicorn enterpriseiq.api.asgi:app" in dockerfile
 
 
 def test_dockerfile_has_service_healthcheck() -> None:
