@@ -1,45 +1,36 @@
-# enterpriseiq-agentic-rag-platform
-Production-ready enterprise RAG and agentic AI platform for grounded knowledge retrieval, tool calling, and citation-backed decision intelligence.
+## Agentic RAG and Controlled Tool Execution
 
+EnterpriseIQ includes a single-agent execution layer on top of the
+citation-backed grounded RAG pipeline.
 
----
+The agent routes enterprise requests through three explicit paths:
 
-## Day 02 - Embeddings and Vector Retrieval
+- **DIRECT_RAG** — answer using grounded enterprise evidence
+- **TOOL_CALL** — invoke an explicitly allowlisted enterprise tool
+- **ABSTAIN** — safely reject unsupported or unsafe execution
 
-EnterpriseIQ now includes pluggable embedding providers, batch embedding generation, a persistent vector index, metadata-aware cosine retrieval, provenance-rich search results, CLI workflows, artifact integrity validation, and retrieval hardening tests.
+The tool layer provides read-only enterprise operations for knowledge
+search, exact document retrieval, document discovery, and department
+discovery.
 
-The deterministic embedding provider is used for reproducible tests and CI and is not a semantic-quality benchmark. A lazy SentenceTransformer provider supports real local semantic embeddings.
+Tool execution uses defense-in-depth controls:
 
-Retrieval supports department, classification, document-type, and document-ID filtering while preserving source provenance for downstream citation-backed RAG.
+- explicit tool allowlisting
+- typed argument validation
+- read-only enforcement by default
+- destructive-request detection
+- controlled handler execution
+- sanitized backend failures
+- immutable execution contracts
+- structured audit traces
 
-Architecture: docs/architecture/vector-retrieval-architecture.md
+Unsafe shell, Python, file-mutation, and destructive database requests are
+not exposed as agent capabilities.
 
-**Status:** Day 01 complete | Day 02 complete | Day 03 next: Advanced Retrieval + Evaluation
+The deterministic router supports reproducible local execution and
+security testing. A future semantic or LLM router can implement the same
+routing contract without bypassing the tool registry or safe execution
+boundary.
 
-## Advanced Retrieval & Evaluation
-
-EnterpriseIQ includes an offline-evaluated retrieval stack with BM25 lexical retrieval, dense semantic retrieval, Reciprocal Rank Fusion, pluggable reranking, metadata filtering, a versioned 15-query enterprise benchmark, Hit@K / Precision@K / Recall@K / MRR / nDCG evaluation, deterministic system comparison, JSON reports, and regression quality gates.
-
-Retrieval quality is evaluated independently before LLM answer generation. See docs/architecture/advanced-retrieval-evaluation.md.
-
-## Grounded RAG & Citations
-
-EnterpriseIQ includes an end-to-end grounded RAG layer built on top of its advanced retrieval and evaluation stack.
-
-The pipeline converts ranked retrieval results into bounded evidence contexts, applies an evidence-only generation policy, invokes a provider-independent answer generator, validates inline `[S#]` citations, and maps accepted citations back to trusted document and chunk provenance.
-
-Key engineering properties include:
-
-- immutable query, evidence, citation, and response contracts;
-- configurable context chunk and character budgets;
-- explicit abstention when evidence is unavailable;
-- rejection of malformed and hallucinated source IDs;
-- citation provenance derived from retrieved evidence;
-- prompt-injection boundaries for instructions embedded in documents;
-- provider-independent generation interfaces;
-- deterministic credential-free integration testing;
-- regression gates across retrieval, generation, citations, and grounding.
-
-The deterministic generator is a reproducibility and integration-testing component, not a semantic LLM implementation.
-
-Architecture details: `docs/architecture/grounded-rag-citations.md`.
+See [`docs/agentic-rag-architecture.md`](docs/agentic-rag-architecture.md)
+for the complete agentic RAG architecture.
