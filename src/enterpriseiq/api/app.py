@@ -9,6 +9,7 @@ from typing import Any
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
+from enterpriseiq.api.agent import router as agent_router
 from enterpriseiq.api.config import APIConfig
 from enterpriseiq.api.dependencies import ServiceContainer
 from enterpriseiq.api.health import router as health_router
@@ -75,8 +76,15 @@ def create_app(
     app.state.api_config = resolved_config
     app.state.service_container = resolved_container
 
+    # Service health and readiness endpoints.
     app.include_router(
         health_router,
+        prefix=resolved_config.api_prefix,
+    )
+
+    # Agent execution endpoint.
+    app.include_router(
+        agent_router,
         prefix=resolved_config.api_prefix,
     )
 
@@ -86,6 +94,8 @@ def create_app(
         summary="Service metadata",
     )
     async def service_root() -> dict[str, Any]:
+        """Return public service metadata."""
+
         return {
             "service": resolved_config.service_name,
             "version": resolved_config.service_version,
@@ -99,6 +109,8 @@ def create_app(
         request: Request,
         exc: Exception,
     ) -> JSONResponse:
+        """Return a sanitized response for unexpected service failures."""
+
         del request, exc
 
         payload = ErrorResponse(

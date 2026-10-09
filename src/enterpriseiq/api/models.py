@@ -51,6 +51,9 @@ class AgentQueryResponse(StrictAPIModel):
     status: str
     decision: str
     answer: str
+    citations: list[CitationResponse] = Field(
+        default_factory=list
+    )
     tool_results: list[ToolResultResponse] = Field(
         default_factory=list
     )
