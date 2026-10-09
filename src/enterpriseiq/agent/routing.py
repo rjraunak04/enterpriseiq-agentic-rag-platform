@@ -117,6 +117,52 @@ class DeterministicAgentRouter:
         "run python",
     )
 
+    _DESTRUCTIVE_DATABASE_VERBS = (
+        "delete",
+        "drop",
+        "destroy",
+        "erase",
+        "remove",
+        "truncate",
+        "wipe",
+    )
+
+    _DATABASE_OBJECT_TERMS = (
+        "database",
+        "table",
+        "schema",
+    )
+
+    _DESTRUCTIVE_FILE_VERBS = (
+        "delete",
+        "remove",
+        "erase",
+        "modify",
+        "overwrite",
+        "write",
+    )
+
+    _FILE_OBJECT_TERMS = (
+        "file",
+        "files",
+    )
+
+    _EXECUTION_VERBS = (
+        "execute",
+        "run",
+        "launch",
+        "invoke",
+    )
+
+    _EXECUTION_TARGETS = (
+        "python",
+        "shell",
+        "powershell",
+        "cmd.exe",
+        "subprocess",
+        "os.system",
+    )
+
     _LIST_DEPARTMENT_TERMS = (
         "list departments",
         "show departments",
@@ -396,7 +442,9 @@ class DeterministicAgentRouter:
 
         try:
             definition = self._registry.get(tool_name)
-            validated = definition.validate_arguments(arguments)
+            validated = definition.validate_arguments(
+                arguments
+            )
         except Exception as exc:
             return self._abstain(
                 f"Tool request failed validation: {exc}"
@@ -417,9 +465,45 @@ class DeterministicAgentRouter:
         normalized_text: str,
     ) -> bool:
         """Return whether text requests an unsafe execution capability."""
-        return cls._contains_any(
+        if cls._contains_any(
             normalized_text,
             cls._UNSAFE_TERMS,
+        ):
+            return True
+
+        if (
+            cls._contains_any(
+                normalized_text,
+                cls._DESTRUCTIVE_DATABASE_VERBS,
+            )
+            and cls._contains_any(
+                normalized_text,
+                cls._DATABASE_OBJECT_TERMS,
+            )
+        ):
+            return True
+
+        if (
+            cls._contains_any(
+                normalized_text,
+                cls._DESTRUCTIVE_FILE_VERBS,
+            )
+            and cls._contains_any(
+                normalized_text,
+                cls._FILE_OBJECT_TERMS,
+            )
+        ):
+            return True
+
+        return (
+            cls._contains_any(
+                normalized_text,
+                cls._EXECUTION_VERBS,
+            )
+            and cls._contains_any(
+                normalized_text,
+                cls._EXECUTION_TARGETS,
+            )
         )
 
     @staticmethod
