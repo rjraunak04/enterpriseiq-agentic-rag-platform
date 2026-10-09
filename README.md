@@ -62,3 +62,26 @@ uvicorn enterpriseiq.api.app:app --reload
 
 See [`docs/service-architecture.md`](docs/service-architecture.md) for the
 Day-06 service architecture and operational boundaries.
+
+
+## Production Engineering and Deployment
+
+EnterpriseIQ includes a non-root Docker runtime, environment-backed production
+configuration, container health checks, Railway deployment metadata, and CI
+container smoke tests.
+
+Production defaults intentionally disable interactive API documentation.
+Runtime configuration is documented in `.env.example`, while deployment and
+release procedures are described in
+[`docs/deployment.md`](docs/deployment.md).
+
+Build locally:
+
+```bash
+docker build -t enterpriseiq:0.7.0 .
+docker run --rm -p 8000:8000 enterpriseiq:0.7.0
+```
+
+The CI pipeline gates releases on linting, the full automated test suite,
+package compilation, container construction, live health probing, and the
+production documentation policy.
