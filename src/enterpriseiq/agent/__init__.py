@@ -25,6 +25,13 @@ from enterpriseiq.agent.models import (
     ToolExecutionStatus,
     ToolResult,
 )
+from enterpriseiq.agent.orchestrator import (
+    AgenticRAGOrchestrator,
+    AgentOrchestrationError,
+    AgentOrchestratorConfig,
+    RAGAnswerer,
+    run_agent,
+)
 from enterpriseiq.agent.routing import (
     AgentRouter,
     AgentRoutingError,
@@ -46,6 +53,8 @@ from enterpriseiq.agent.tools import (
 __all__ = [
     "AgentContractError",
     "AgentDecision",
+    "AgentOrchestrationError",
+    "AgentOrchestratorConfig",
     "AgentQuery",
     "AgentResponse",
     "AgentRouter",
@@ -53,11 +62,13 @@ __all__ = [
     "AgentStatus",
     "AgentStep",
     "AgentTrace",
+    "AgenticRAGOrchestrator",
     "DecisionType",
     "DeterministicAgentRouter",
     "EnterpriseKnowledgeTools",
     "KnowledgeRetriever",
     "KnowledgeToolError",
+    "RAGAnswerer",
     "RoutingConfig",
     "SafeToolExecutor",
     "ToolCall",
@@ -76,4 +87,5 @@ __all__ = [
     "ToolRegistryError",
     "ToolResult",
     "execute_tool",
+    "run_agent",
 ]
