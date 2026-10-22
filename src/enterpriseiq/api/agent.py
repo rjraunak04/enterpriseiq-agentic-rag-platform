@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import inspect
+from collections.abc import Mapping
 from dataclasses import asdict, is_dataclass
 from enum import Enum
 from typing import Any
@@ -287,7 +288,7 @@ def _extract_citations(
 
     if not candidates:
         metadata = _attribute(response, "metadata", {})
-        if isinstance(metadata, dict):
+        if isinstance(metadata, Mapping):
             candidates = metadata.get("rag_citations", candidates)
 
     if not isinstance(
