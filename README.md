@@ -1,87 +1,187 @@
-## Agentic RAG and Controlled Tool Execution
+# EnterpriseIQ — Agentic RAG Platform
 
-EnterpriseIQ includes a single-agent execution layer on top of the
-citation-backed grounded RAG pipeline.
+A production-oriented enterprise knowledge assistant built with Python, FastAPI, retrieval-augmented generation (RAG), citation validation, and controlled tool execution.
 
-The agent routes enterprise requests through three explicit paths:
+EnterpriseIQ is designed around a simple rule: **answers must be grounded in retrieved enterprise evidence, and tools must operate inside an explicit safety boundary.**
 
-- **DIRECT_RAG** — answer using grounded enterprise evidence
-- **TOOL_CALL** — invoke an explicitly allowlisted enterprise tool
-- **ABSTAIN** — safely reject unsupported or unsafe execution
+## What it does
 
-The tool layer provides read-only enterprise operations for knowledge
-search, exact document retrieval, document discovery, and department
-discovery.
+- **Grounded knowledge retrieval:** loads a curated policy corpus, chunks documents, embeds them, and retrieves ranked evidence.
+- **Hybrid retrieval components:** provides semantic and lexical retrieval with reciprocal-rank fusion for combining rankings.
+- **Citation-backed answers:** attaches source IDs to evidence and validates citations before returning a grounded response.
+- **Controlled agent routing:** separates direct RAG, allowlisted tool calls, and abstention paths.
+- **Read-only enterprise tools:** supports knowledge search, exact document retrieval, document discovery, and department discovery.
+- **Integrity-checked vector index:** validates persisted index bytes against a SHA-256 manifest before loading.
+- **Service operations:** exposes health/readiness endpoints, Prometheus-compatible metrics, request correlation IDs, structured logging, and sanitized errors.
+- **Container deployment:** includes a non-root Docker image, container health check, production documentation defaults, and Railway configuration.
 
-Tool execution uses defense-in-depth controls:
+## Architecture
 
-- explicit tool allowlisting
-- typed argument validation
-- read-only enforcement by default
-- destructive-request detection
-- controlled handler execution
-- sanitized backend failures
-- immutable execution contracts
-- structured audit traces
-
-Unsafe shell, Python, file-mutation, and destructive database requests are
-not exposed as agent capabilities.
-
-The deterministic router supports reproducible local execution and
-security testing. A future semantic or LLM router can implement the same
-routing contract without bypassing the tool registry or safe execution
-boundary.
-
-See [`docs/agentic-rag-architecture.md`](docs/agentic-rag-architecture.md)
-for the complete agentic RAG architecture.
-
-## FastAPI Service, Demo, and Observability
-
-EnterpriseIQ exposes the agentic RAG runtime through a production-oriented
-FastAPI boundary with strict request/response contracts, correlation IDs,
-structured logging, operational metrics, and sanitized failures.
-
-Key service surfaces:
-
-- `/v1/health` and `/v1/ready` for service health
-- `/v1/agent` for grounded agent execution
-- `/v1/metrics` for Prometheus-compatible request/error/latency metrics
-- `/demo` for a lightweight recruiter-facing browser interface
-- `/docs` for interactive OpenAPI documentation when enabled
-
-The HTTP layer applies configurable query limits, offloads synchronous agent
-execution from the async event loop, adds defensive browser security headers,
-and does not enable permissive CORS by default. Logs and metrics avoid query
-payloads and use request correlation IDs for operational tracing.
-
-Run locally:
-
-```bash
-uvicorn enterpriseiq.api.app:app --reload
+```text
+Client / Demo UI
+      |
+      v
+FastAPI boundary
+(request validation, request IDs, security headers, metrics)
+      |
+      v
+Agent router
+  |            |             |
+  v            v             v
+Direct RAG   Safe tool     Abstain
+  |          registry        |
+  v            |             |
+Retrieve       v             |
+evidence   Typed validation  |
+  |            |             |
+  v            v             |
+Grounded    Read-only        |
+context     handlers         |
+  |            |             |
+  v            +-------------+
+Answer generation
+  |
+  v
+Citation validation
+  |
+  v
+Structured response + audit metadata
 ```
 
-See [`docs/service-architecture.md`](docs/service-architecture.md) for the
-Day-06 service architecture and operational boundaries.
+Detailed design: [Agentic RAG architecture](docs/agentic-rag-architecture.md) · [Service architecture](docs/service-architecture.md)
 
+## Repository map
 
-## Production Engineering and Deployment
+| Path | Purpose |
+|---|---|
+| `src/enterpriseiq/agent/` | Agent routing and controlled execution contracts |
+| `src/enterpriseiq/rag/` | Evidence context, prompt policy, generation contract, and citation validation |
+| `src/enterpriseiq/retrieval/` | Semantic/lexical retrieval, hybrid fusion, and persistent vector index |
+| `src/enterpriseiq/ingestion/` | Enterprise document loading and chunking |
+| `src/enterpriseiq/api/` | FastAPI service, request models, health, metrics, and demo UI |
+| `data/raw/` | Sample enterprise policy corpus |
+| `tests/` | Unit, integration, security, API, and retrieval benchmark tests |
+| `docs/` | Architecture, operations, and deployment documentation |
 
-EnterpriseIQ includes a non-root Docker runtime, environment-backed production
-configuration, container health checks, Railway deployment metadata, and CI
-container smoke tests.
+## Run locally
 
-Production defaults intentionally disable interactive API documentation.
-Runtime configuration is documented in `.env.example`, while deployment and
-release procedures are described in
-[`docs/deployment.md`](docs/deployment.md).
+Requires Python 3.11 or newer.
 
-Build locally:
+### Install
 
-```bash
-docker build -t enterpriseiq:0.7.0 .
-docker run --rm -p 8000:8000 enterpriseiq:0.7.0
+PowerShell:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -e ".[dev]"
 ```
 
-The CI pipeline gates releases on linting, the full automated test suite,
-package compilation, container construction, live health probing, and the
-production documentation policy.
+Linux/macOS:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -e ".[dev]"
+```
+
+### Start the API
+
+```bash
+uvicorn enterpriseiq.api.asgi:app --host 127.0.0.1 --port 8000
+```
+
+Production configuration is environment-backed. See [.env.example](.env.example). Interactive OpenAPI documentation is disabled by default; set `ENTERPRISEIQ_EXPOSE_DOCS=true` when it is intentionally needed in a local or controlled environment.
+
+## API quickstart
+
+### Readiness
+
+```bash
+curl --fail http://127.0.0.1:8000/v1/ready
+```
+
+### Ask a policy question
+
+```bash
+curl --fail http://127.0.0.1:8000/v1/agent \
+  -H "Content-Type: application/json" \
+  -d '{"query":"What is the expense reimbursement policy?"}'
+```
+
+PowerShell equivalent:
+
+```powershell
+$body = @{ query = "What is the expense reimbursement policy?" } |
+    ConvertTo-Json -Compress
+
+Invoke-RestMethod -Uri "http://localhost:8000/v1/agent" `
+    -Method Post `
+    -ContentType "application/json" `
+    -Body $body
+```
+
+Useful service endpoints:
+
+| Endpoint | Purpose |
+|---|---|
+| `GET /v1/health` | Liveness/health |
+| `GET /v1/ready` | Readiness probe |
+| `POST /v1/agent` | Execute an agent query |
+| `GET /v1/metrics` | Prometheus-compatible operational metrics |
+| `GET /demo` | Lightweight browser demo |
+| `GET /docs` | OpenAPI UI, when explicitly enabled |
+
+## Run tests and quality checks
+
+```bash
+ruff check .
+pytest -q
+python -m compileall -q src
+```
+
+The GitHub Actions workflow runs linting, the full test suite, package compilation, a Docker build, a live readiness probe, and a production documentation-policy check.
+
+## Build and run with Docker
+
+```bash
+docker build -t enterpriseiq:local .
+docker run --rm -p 8000:8000 enterpriseiq:local
+```
+
+Then verify:
+
+```bash
+curl --fail http://127.0.0.1:8000/v1/ready
+```
+
+The image runs as a non-root user and includes a container health check. Deployment instructions, including Railway configuration, are in [docs/deployment.md](docs/deployment.md).
+
+## Grounding and safety boundaries
+
+- Retrieved document content is treated as evidence, not as instructions to override system policy.
+- Unsupported questions should abstain rather than fabricate a policy answer.
+- Only registered tools with typed parameters are exposed to the agent.
+- Destructive shell, Python, filesystem-mutation, and database operations are not exposed as agent tools.
+- Citation validation checks that returned source IDs belong to the retrieved evidence.
+- The persisted vector index is verified against its SHA-256 manifest on load.
+- Secrets and provider credentials must be supplied through deployment configuration; they should not be committed to the repository.
+
+## Current implementation scope
+
+The default answer generator is **deterministic and dependency-free**. It is useful for reproducible tests, local demonstrations, and verifying evidence/citation flow; it preserves the selected evidence block rather than producing semantic LLM-style summaries. A production LLM provider can be added behind the existing `AnswerGenerator` contract, while retaining citation validation and abstention controls.
+
+The default runtime uses a deterministic embedding implementation for reproducible local execution. Replace it with a deployment-specific embedding provider and evaluated index before relying on the service for production enterprise search at scale.
+
+## Deployment
+
+- [Deployment guide](docs/deployment.md)
+- [Agentic RAG architecture](docs/agentic-rag-architecture.md)
+- [Service architecture](docs/service-architecture.md)
+- [Environment template](.env.example)
+
+## License
+
+No license file is currently defined in this repository. Contact the repository owner before reusing or redistributing this project.
