@@ -54,6 +54,7 @@ def test_list_documents_filters_by_department(runtime) -> None:
     assert result.output["count"] > 0
     assert len(result.output["documents"]) == result.output["count"]
 
+
 def test_search_knowledge_accepts_router_top_k_argument(runtime) -> None:
     result = runtime.tool_executor.execute(
         ToolCall(
