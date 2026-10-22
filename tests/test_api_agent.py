@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import StrEnum
+from types import MappingProxyType
 from typing import Any
 
 from fastapi.testclient import TestClient
@@ -515,3 +516,42 @@ def test_openapi_documents_agent_endpoint() -> None:
     assert "422" in endpoint["responses"]
     assert "500" in endpoint["responses"]
     assert "503" in endpoint["responses"]
+
+def test_agent_endpoint_serializes_citations_from_immutable_metadata() -> None:
+    agent_response = FakeAgentResponse(
+        status=FakeStatus.COMPLETED,
+        decision=FakeDecision(
+            decision_type=FakeDecisionType.DIRECT_RAG,
+        ),
+        answer="Grounded evidence: receipt required [S1]",
+        metadata=MappingProxyType(
+            {
+                "rag_citations": (
+                    {
+                        "source_id": "S1",
+                        "document_id": "FIN-001",
+                        "title": "Expense Reimbursement Policy",
+                    },
+                ),
+            }
+        ),
+    )
+    app = create_app(
+        container=ServiceContainer(agent=FakeAgent(agent_response)),
+    )
+
+    with TestClient(app) as client:
+        response = client.post(
+            "/v1/agent",
+            json={"query": "What is the expense reimbursement policy?"},
+        )
+
+    assert response.status_code == 200
+    assert response.json()["citations"] == [
+        {
+            "source_id": "S1",
+            "document_id": "FIN-001",
+            "title": "Expense Reimbursement Policy",
+        }
+    ]
+
