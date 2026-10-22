@@ -10,6 +10,7 @@ def test_dockerfile_uses_non_root_runtime() -> None:
     assert "FROM python:3.12-slim" in dockerfile
     assert "USER enterpriseiq" in dockerfile
     assert "uvicorn enterpriseiq.api.asgi:app" in dockerfile
+    assert "COPY data/raw ./data/raw" in dockerfile
 
 
 def test_dockerfile_has_service_healthcheck() -> None:
