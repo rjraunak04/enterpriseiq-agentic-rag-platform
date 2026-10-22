@@ -20,6 +20,8 @@ from enterpriseiq.ingestion.chunker import chunk_documents
 from enterpriseiq.ingestion.loader import load_document_directory
 from enterpriseiq.rag.generation import DeterministicAnswerGenerator
 from enterpriseiq.rag.pipeline import GroundedRAGPipeline
+from enterpriseiq.retrieval.hybrid import HybridRetriever
+from enterpriseiq.retrieval.lexical import BM25Retriever
 from enterpriseiq.retrieval.semantic import SemanticRetriever
 from enterpriseiq.retrieval.vector_index import (
     PersistentVectorIndex,
@@ -67,7 +69,12 @@ def build_agent_runtime(
         model_name=provider.model_name,
         records=records,
     )
-    retriever = SemanticRetriever(index=index, provider=provider)
+    dense_retriever = SemanticRetriever(index=index, provider=provider)
+    lexical_retriever = BM25Retriever(index.records)
+    retriever = HybridRetriever(
+        dense_retriever=dense_retriever,
+        lexical_retriever=lexical_retriever,
+    )
     rag_pipeline = GroundedRAGPipeline(
         retriever=retriever,
         generator=DeterministicAnswerGenerator(),
