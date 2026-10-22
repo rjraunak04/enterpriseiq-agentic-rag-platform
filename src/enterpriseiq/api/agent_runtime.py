@@ -77,10 +77,11 @@ def build_agent_runtime(
         *,
         context: ToolContext,
         query: str,
+        top_k: int = 5,
     ) -> dict[str, Any]:
         """Search the indexed enterprise knowledge."""
         del context
-        matches = retriever.search(query, top_k=5)
+        matches = retriever.search(query, top_k=top_k)
         return {
             "matches": [
                 {
@@ -157,6 +158,13 @@ def build_agent_runtime(
                         name="query",
                         value_type=str,
                         description="Search query.",
+                    ),
+                    ToolParameter(
+                        name="top_k",
+                        value_type=int,
+                        description="Maximum number of search results.",
+                        required=False,
+                        default=5,
                     ),
                 ),
             ),
