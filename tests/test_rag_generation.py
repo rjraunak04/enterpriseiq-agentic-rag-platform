@@ -259,3 +259,38 @@ def test_generator_does_not_require_external_credentials() -> None:
     answer = generator.generate(_grounded_prompt())
 
     assert answer.metadata["provider"] == "deterministic"
+
+def test_generator_preserves_multiline_evidence_block() -> None:
+    prompt = GroundedPrompt(
+        system="System",
+        user="\n".join(
+            (
+                "QUESTION:",
+                "What is the policy?",
+                "",
+                "EVIDENCE:",
+                "[S1]",
+                "Title: Expense Reimbursement Policy",
+                "Evidence: # Expense Reimbursement Policy",
+                "## Submission Deadline",
+                "Claims should be submitted within 30 calendar days.",
+                "",
+                "[S2]",
+                "Title: Other Policy",
+                "Evidence: Do not include this source.",
+                "",
+                "RESPONSE REQUIREMENTS:",
+                "- Cite factual claims.",
+            )
+        ),
+        source_ids=("S1", "S2"),
+        requires_abstention=False,
+    )
+
+    answer = DeterministicAnswerGenerator().generate(prompt)
+
+    assert "Submission Deadline" in answer.text
+    assert "30 calendar days" in answer.text
+    assert "Other Policy" not in answer.text
+    assert "Do not include this source" not in answer.text
+    assert answer.text.endswith("[S1]")
