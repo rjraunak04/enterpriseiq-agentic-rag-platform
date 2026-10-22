@@ -192,6 +192,43 @@ def test_agent_endpoint_executes_configured_agent() -> None:
     }
 
 
+def test_agent_endpoint_serializes_rag_citations_from_metadata() -> None:
+    agent_response = FakeAgentResponse(
+        status=FakeStatus.COMPLETED,
+        decision=FakeDecision(
+            decision_type=FakeDecisionType.DIRECT_RAG,
+        ),
+        answer="Grounded evidence: expense receipts [S1]",
+        metadata={
+            "rag_citations": (
+                {
+                    "source_id": "S1",
+                    "document_id": "FIN-001",
+                    "title": "Expense Reimbursement Policy",
+                },
+            ),
+        },
+    )
+    app = create_app(
+        container=ServiceContainer(agent=FakeAgent(agent_response)),
+    )
+
+    with TestClient(app) as client:
+        response = client.post(
+            "/v1/agent",
+            json={"query": "What is the expense reimbursement policy?"},
+        )
+
+    assert response.status_code == 200
+    assert response.json()["citations"] == [
+        {
+            "source_id": "S1",
+            "document_id": "FIN-001",
+            "title": "Expense Reimbursement Policy",
+        }
+    ]
+
+
 def test_agent_endpoint_supports_async_agent() -> None:
     container = ServiceContainer(
         agent=AsyncFakeAgent(
