@@ -1,6 +1,6 @@
 {
   "dimension": 384,
-  "index_sha256": "eb1fb63091123a8419a66de8c318aa1dc93d2badc41684418edfdad85ebc8159",
+  "index_sha256": "3a3c02a8b9cf2f99b3a82081108fb5eb4ce0fc0d1ee51da566ee5088defb5144",
   "model_name": "enterpriseiq-deterministic-v1",
   "record_count": 27,
   "schema_version": 1
