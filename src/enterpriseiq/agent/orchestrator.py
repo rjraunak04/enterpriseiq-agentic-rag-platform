@@ -507,6 +507,14 @@ class AgenticRAGOrchestrator:
             "citation_count": len(
                 response.citations
             ),
+            "rag_citations": tuple(
+                {
+                    "source_id": citation.source_id,
+                    "document_id": citation.document_id,
+                    "title": citation.title,
+                }
+                for citation in response.citations
+            ),
             "rag_metadata": dict(
                 response.metadata
             ),
