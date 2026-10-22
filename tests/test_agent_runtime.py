@@ -103,7 +103,8 @@ def test_direct_rag_returns_matching_policy_and_citation(runtime) -> None:
 
     assert response.status.value == "completed"
     assert response.answer
-    assert response.citations
-    assert response.citations[0].document_id == "FIN-001"
-    assert response.citations[0].title == "Expense Reimbursement Policy"
+    citations = response.metadata["rag_citations"]
+    assert citations
+    assert citations[0]["document_id"] == "FIN-001"
+    assert citations[0]["title"] == "Expense Reimbursement Policy"
 
