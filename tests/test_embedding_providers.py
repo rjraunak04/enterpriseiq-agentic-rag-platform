@@ -49,6 +49,23 @@ def test_deterministic_provider_changes_with_text() -> None:
     assert first != second
 
 
+def test_deterministic_provider_preserves_shared_token_similarity() -> None:
+    provider = DeterministicEmbeddingProvider(make_config(dimension=384))
+    query = provider.embed_query("expense reimbursement policy")
+    relevant = provider.embed_query(
+        "expense reimbursement policy employees submit receipts"
+    )
+    unrelated = provider.embed_query("VPN network access troubleshooting")
+
+    def cosine(left: tuple[float, ...], right: tuple[float, ...]) -> float:
+        dot = sum(a * b for a, b in zip(left, right, strict=True))
+        left_norm = math.sqrt(sum(value * value for value in left))
+        right_norm = math.sqrt(sum(value * value for value in right))
+        return dot / (left_norm * right_norm)
+
+    assert cosine(query, relevant) > cosine(query, unrelated)
+
+
 def test_deterministic_provider_respects_dimension() -> None:
     provider = DeterministicEmbeddingProvider(make_config(dimension=17))
 
