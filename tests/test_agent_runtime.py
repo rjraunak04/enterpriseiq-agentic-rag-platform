@@ -97,3 +97,13 @@ def test_search_knowledge_defaults_top_k(runtime) -> None:
     arguments = definition.validate_arguments({"query": "remote work"})
 
     assert arguments == {"query": "remote work", "top_k": 5}
+
+def test_direct_rag_returns_matching_policy_and_citation(runtime) -> None:
+    response = runtime.run("What is the expense reimbursement policy?")
+
+    assert response.status.value == "completed"
+    assert response.answer
+    assert response.citations
+    assert response.citations[0].document_id == "FIN-001"
+    assert response.citations[0].title == "Expense Reimbursement Policy"
+
