@@ -282,8 +282,13 @@ def _extract_citations(
         candidates = _attribute(
             grounded_response,
             "citations",
-            [],
+            None,
         )
+
+    if not candidates:
+        metadata = _attribute(response, "metadata", {})
+        if isinstance(metadata, dict):
+            candidates = metadata.get("rag_citations", candidates)
 
     if not isinstance(
         candidates,
