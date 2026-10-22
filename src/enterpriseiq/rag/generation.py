@@ -109,10 +109,39 @@ class DeterministicAnswerGenerator:
 
     @staticmethod
     def _first_evidence_text(user_prompt: str) -> str:
-        """Extract the first rendered Evidence field deterministically."""
+        """Extract the complete first evidence block, including multiline text.
+
+        Evidence documents commonly contain Markdown headings and paragraphs.
+        Returning only the line containing the Evidence label silently
+        discarded everything after the first newline (often just the title).
+        Stop at the next source marker or the response requirements section so
+        that additional sources and prompt instructions are not included.
+        """
+
+        evidence_lines: list[str] = []
+        collecting = False
 
         for line in user_prompt.splitlines():
-            if line.startswith("Evidence:"):
-                return line.removeprefix("Evidence:").strip()
+            stripped = line.strip()
 
-        return ""
+            if not collecting:
+                if line.startswith("Evidence:"):
+                    evidence_lines.append(
+                        line.removeprefix("Evidence:").strip()
+                    )
+                    collecting = True
+                continue
+
+            if stripped == "RESPONSE REQUIREMENTS:":
+                break
+
+            if (
+                stripped.startswith("[S")
+                and stripped.endswith("]")
+                and stripped[2:-1].isdigit()
+            ):
+                break
+
+            evidence_lines.append(line)
+
+        return "\n".join(evidence_lines).strip()
