@@ -25,7 +25,7 @@ class Retriever(Protocol):
         *,
         top_k: int = 5,
         filters: SearchFilters | None = None,
-        min_score: float = 0.0,
+        min_score: float | None = None,
     ) -> list[SearchResult]:
         """Retrieve ranked enterprise evidence."""
         ...
@@ -201,14 +201,14 @@ class HybridRetriever:
                 "top_k must be a positive integer"
             )
 
-        if (
+        if min_score is not None and (
             isinstance(min_score, bool)
             or not isinstance(min_score, (int, float))
             or not math.isfinite(float(min_score))
             or min_score < 0
         ):
             raise HybridRetrievalError(
-                "min_score must be a finite non-negative number"
+                "min_score must be a finite non-negative number or None"
             )
 
         dense_results = self._dense_retriever.search(
@@ -228,6 +228,9 @@ class HybridRetriever:
             rrf_k=self._config.rrf_k,
             top_k=top_k,
         )
+
+        if min_score is None:
+            return fused
 
         return [
             result
