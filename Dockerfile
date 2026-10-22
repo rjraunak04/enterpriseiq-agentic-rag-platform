@@ -12,6 +12,7 @@ RUN addgroup --system enterpriseiq \
 
 COPY pyproject.toml README.md ./
 COPY src ./src
+COPY data/raw ./data/raw
 RUN python -m pip install --upgrade pip \
     && python -m pip install .
 
