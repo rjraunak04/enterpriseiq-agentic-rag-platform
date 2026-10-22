@@ -76,21 +76,26 @@ class DeterministicEmbeddingProvider:
         return self._config.model_name
 
     def _embed(self, text: str) -> Vector:
-        cleaned = _validate_text(text)
+        """Create a deterministic feature-hashed bag-of-words vector.
 
-        values: list[float] = []
-        counter = 0
+        This dependency-free provider is intended for tests and local QA,
+        not as a substitute for a trained semantic embedding model. Shared
+        terms map to shared dimensions so lexical matches can rank above
+        unrelated documents in the demo runtime.
+        """
+        import re
 
-        while len(values) < self.dimension:
-            payload = f"{cleaned}|{counter}".encode()
-            digest = hashlib.sha256(payload).digest()
+        cleaned = _validate_text(text).casefold()
+        tokens = re.findall(r"[a-z0-9]+", cleaned)
+        if not tokens:
+            raise ValueError("text must contain at least one searchable token")
 
-            for byte in digest:
-                values.append((byte / 127.5) - 1.0)
-                if len(values) == self.dimension:
-                    break
-
-            counter += 1
+        values = [0.0] * self.dimension
+        for token in tokens:
+            digest = hashlib.sha256(token.encode("utf-8")).digest()
+            bucket = int.from_bytes(digest[:4], "big") % self.dimension
+            sign = 1.0 if digest[4] & 1 else -1.0
+            values[bucket] += sign
 
         return _validate_vector(
             values,
