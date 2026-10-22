@@ -8,7 +8,12 @@ from typing import Any
 from enterpriseiq.agent.execution import SafeToolExecutor
 from enterpriseiq.agent.orchestrator import AgenticRAGOrchestrator
 from enterpriseiq.agent.routing import DeterministicAgentRouter
-from enterpriseiq.agent.tools import ToolContext, ToolDefinition, ToolParameter, ToolRegistry
+from enterpriseiq.agent.tools import (
+    ToolContext,
+    ToolDefinition,
+    ToolParameter,
+    ToolRegistry,
+)
 from enterpriseiq.embeddings.config import EmbeddingConfig
 from enterpriseiq.embeddings.providers import DeterministicEmbeddingProvider
 from enterpriseiq.ingestion.chunker import chunk_documents
@@ -16,10 +21,15 @@ from enterpriseiq.ingestion.loader import load_document_directory
 from enterpriseiq.rag.generation import DeterministicAnswerGenerator
 from enterpriseiq.rag.pipeline import GroundedRAGPipeline
 from enterpriseiq.retrieval.semantic import SemanticRetriever
-from enterpriseiq.retrieval.vector_index import PersistentVectorIndex, VectorIndexRecord
+from enterpriseiq.retrieval.vector_index import (
+    PersistentVectorIndex,
+    VectorIndexRecord,
+)
 
 
-def build_agent_runtime(corpus_dir: str | Path = "data/raw") -> AgenticRAGOrchestrator:
+def build_agent_runtime(
+    corpus_dir: str | Path = "data/raw",
+) -> AgenticRAGOrchestrator:
     """Load the bundled policy corpus and compose retrieval, RAG and safe tools."""
     documents = load_document_directory(corpus_dir)
     if not documents:
@@ -63,26 +73,65 @@ def build_agent_runtime(corpus_dir: str | Path = "data/raw") -> AgenticRAGOrches
         generator=DeterministicAnswerGenerator(),
     )
 
-    def search_knowledge(*, context: ToolContext, query: str) -> dict[str, Any]:
+    def search_knowledge(
+        *,
+        context: ToolContext,
+        query: str,
+    ) -> dict[str, Any]:
+        """Search the indexed enterprise knowledge."""
         del context
         matches = retriever.search(query, top_k=5)
-        return {"matches": [
-            {"document_id": item.document_id, "title": item.title, "text": item.text}
-            for item in matches
-        ]}
+        return {
+            "matches": [
+                {
+                    "document_id": item.document_id,
+                    "title": item.title,
+                    "text": item.text,
+                }
+                for item in matches
+            ]
+        }
 
-    def list_documents(*, context: ToolContext) -> dict[str, Any]:
+    def list_documents(
+        *,
+        context: ToolContext,
+        department: str | None = None,
+    ) -> dict[str, Any]:
+        """List documents, optionally filtering by department."""
         del context
-        return {"documents": [
-            {"document_id": doc.document_id, "title": doc.title}
+        filtered_documents = [
+            doc
             for doc in documents
-        ]}
+            if department is None
+            or doc.department.casefold() == department.casefold()
+        ]
+        return {
+            "department": department,
+            "count": len(filtered_documents),
+            "documents": [
+                {
+                    "document_id": doc.document_id,
+                    "title": doc.title,
+                }
+                for doc in filtered_documents
+            ],
+        }
 
     def list_departments(*, context: ToolContext) -> dict[str, Any]:
+        """Return the departments represented in the corpus."""
         del context
-        return {"departments": sorted({doc.department for doc in documents})}
+        return {
+            "departments": sorted(
+                {doc.department for doc in documents}
+            )
+        }
 
-    def get_document(*, context: ToolContext, document_id: str) -> dict[str, Any]:
+    def get_document(
+        *,
+        context: ToolContext,
+        document_id: str,
+    ) -> dict[str, Any]:
+        """Retrieve a document by its ID."""
         del context
         for doc in documents:
             if doc.document_id.casefold() == document_id.casefold():
@@ -92,32 +141,61 @@ def build_agent_runtime(corpus_dir: str | Path = "data/raw") -> AgenticRAGOrches
                     "department": doc.department,
                     "content": doc.content,
                 }
-        return {"error": "Document not found.", "document_id": document_id}
+        return {
+            "error": "Document not found.",
+            "document_id": document_id,
+        }
 
-    registry = ToolRegistry((
-        ToolDefinition(
-            name="search_knowledge",
-            description="Search approved enterprise policy knowledge.",
-            handler=search_knowledge,
-            parameters=(ToolParameter(name="query", value_type=str, description="Search query."),),
-        ),
-        ToolDefinition(
-            name="list_documents",
-            description="List available enterprise documents.",
-            handler=list_documents,
-        ),
-        ToolDefinition(
-            name="list_departments",
-            description="List departments represented in the corpus.",
-            handler=list_departments,
-        ),
-        ToolDefinition(
-            name="get_document",
-            description="Retrieve an approved enterprise document by ID.",
-            handler=get_document,
-            parameters=(ToolParameter(name="document_id", value_type=str, description="Document ID."),),
-        ),
-    ))
+    registry = ToolRegistry(
+        (
+            ToolDefinition(
+                name="search_knowledge",
+                description="Search approved enterprise policy knowledge.",
+                handler=search_knowledge,
+                parameters=(
+                    ToolParameter(
+                        name="query",
+                        value_type=str,
+                        description="Search query.",
+                    ),
+                ),
+            ),
+            ToolDefinition(
+                name="list_documents",
+                description=(
+                    "List available enterprise documents, optionally "
+                    "filtered by department."
+                ),
+                handler=list_documents,
+                parameters=(
+                    ToolParameter(
+                        name="department",
+                        value_type=str,
+                        description="Optional department filter.",
+                        required=False,
+                        default=None,
+                    ),
+                ),
+            ),
+            ToolDefinition(
+                name="list_departments",
+                description="List departments represented in the corpus.",
+                handler=list_departments,
+            ),
+            ToolDefinition(
+                name="get_document",
+                description="Retrieve an approved enterprise document by ID.",
+                handler=get_document,
+                parameters=(
+                    ToolParameter(
+                        name="document_id",
+                        value_type=str,
+                        description="Document ID.",
+                    ),
+                ),
+            ),
+        )
+    )
     executor = SafeToolExecutor(registry)
     router = DeterministicAgentRouter(registry)
     return AgenticRAGOrchestrator(
