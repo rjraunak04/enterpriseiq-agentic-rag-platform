@@ -70,6 +70,27 @@ def test_search_knowledge_accepts_router_top_k_argument(runtime) -> None:
     assert len(result.output["matches"]) <= 2
 
 
+def test_search_knowledge_ranks_matching_policy_first(runtime) -> None:
+    result = runtime.tool_executor.execute(
+        ToolCall(
+            tool_name="search_knowledge",
+            arguments={
+                "query": "What is the expense reimbursement policy?",
+                "top_k": 5,
+            },
+        ),
+        context=ToolContext(),
+    )
+
+    assert result.status is ToolExecutionStatus.SUCCESS
+    assert result.error is None
+    assert isinstance(result.output, dict)
+    matches = result.output["matches"]
+    assert matches
+    assert matches[0]["document_id"] == "FIN-001"
+    assert matches[0]["title"] == "Expense Reimbursement Policy"
+
+
 def test_search_knowledge_defaults_top_k(runtime) -> None:
     definition = runtime.tool_executor.registry.get("search_knowledge")
 
