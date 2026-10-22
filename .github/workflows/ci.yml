@@ -45,7 +45,7 @@ jobs:
         run: python -m compileall -q src
 
   container:
-    name: Container smoke test
+    name: Container runtime smoke test
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: quality
@@ -60,10 +60,10 @@ jobs:
       - name: Start container
         run: docker run -d --name enterpriseiq-ci -p 8000:8000 enterpriseiq:ci
 
-      - name: Wait for health
+      - name: Wait for agent readiness
         run: |
-          for attempt in {1..20}; do
-            if curl --fail --silent http://127.0.0.1:8000/v1/health; then
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:8000/v1/ready; then
               exit 0
             fi
             sleep 2
@@ -73,6 +73,15 @@ jobs:
 
       - name: Verify production docs policy
         run: test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8000/docs)" = "404"
+
+      - name: Verify agent query
+        run: |
+          response="$(curl --fail --silent --show-error \
+            -H 'Content-Type: application/json' \
+            -d '{"query":"What is the remote work policy?"}' \
+            http://127.0.0.1:8000/v1/agent)"
+          echo "$response"
+          RESPONSE="$response" python -c "import json, os; payload=json.loads(os.environ['RESPONSE']); assert isinstance(payload.get('answer'), str) and payload['answer'].strip(), payload"
 
       - name: Show logs on failure
         if: failure()
