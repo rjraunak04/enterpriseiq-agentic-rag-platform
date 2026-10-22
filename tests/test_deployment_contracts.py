@@ -13,10 +13,10 @@ def test_dockerfile_uses_non_root_runtime() -> None:
     assert "COPY data/raw ./data/raw" in dockerfile
 
 
-def test_dockerfile_has_service_healthcheck() -> None:
+def test_dockerfile_uses_agent_readiness_check() -> None:
     dockerfile = (ROOT / "Dockerfile").read_text(encoding="utf-8")
     assert "HEALTHCHECK" in dockerfile
-    assert "/v1/health" in dockerfile
+    assert "/v1/ready" in dockerfile
 
 
 def test_dockerignore_excludes_local_and_test_artifacts() -> None:
