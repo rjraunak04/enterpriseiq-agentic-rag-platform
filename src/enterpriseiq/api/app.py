@@ -1,0 +1,166 @@
+"""FastAPI application foundation for EnterpriseIQ."""
+
+from __future__ import annotations
+
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+from typing import Any
+
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+
+from enterpriseiq.api.agent import router as agent_router
+from enterpriseiq.api.config import APIConfig
+from enterpriseiq.api.demo import router as demo_router
+from enterpriseiq.api.dependencies import ServiceContainer
+from enterpriseiq.api.health import router as health_router
+from enterpriseiq.api.metrics import MetricsRegistry
+from enterpriseiq.api.metrics import router as metrics_router
+from enterpriseiq.api.middleware import RequestContextMiddleware, get_request_id, log_event
+from enterpriseiq.api.models import ErrorResponse
+
+
+def _build_lifespan(
+    container: ServiceContainer,
+):
+    """Create the application lifespan handler."""
+
+    @asynccontextmanager
+    async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+        app.state.service_container = container
+        yield
+
+    return lifespan
+
+
+def get_service_container(request: Request) -> ServiceContainer:
+    """Return the service dependency container attached to the application."""
+
+    container = getattr(
+        request.app.state,
+        "service_container",
+        None,
+    )
+
+    if not isinstance(container, ServiceContainer):
+        raise RuntimeError(
+            "EnterpriseIQ service container is unavailable."
+        )
+
+    return container
+
+
+def create_app(
+    *,
+    config: APIConfig | None = None,
+    container: ServiceContainer | None = None,
+) -> FastAPI:
+    """Create a configured EnterpriseIQ FastAPI application."""
+
+    resolved_config = config or APIConfig()
+    resolved_container = container or ServiceContainer()
+    metrics_registry = MetricsRegistry()
+
+    docs_url = "/docs" if resolved_config.expose_docs else None
+    redoc_url = "/redoc" if resolved_config.expose_docs else None
+    openapi_url = "/openapi.json" if resolved_config.expose_docs else None
+
+    app = FastAPI(
+        title=resolved_config.service_name,
+        version=resolved_config.service_version,
+        description=(
+            "Enterprise-grade agentic RAG service for grounded "
+            "knowledge retrieval and controlled tool execution."
+        ),
+        docs_url=docs_url,
+        redoc_url=redoc_url,
+        openapi_url=openapi_url,
+        lifespan=_build_lifespan(resolved_container),
+    )
+
+    app.state.api_config = resolved_config
+    app.state.service_container = resolved_container
+    app.state.metrics_registry = metrics_registry
+
+    app.add_middleware(
+        RequestContextMiddleware,
+        config=resolved_config,
+        metrics=metrics_registry,
+    )
+
+    app.include_router(demo_router)
+
+    # Service health and readiness endpoints.
+    app.include_router(
+        health_router,
+        prefix=resolved_config.api_prefix,
+    )
+
+    app.include_router(
+        metrics_router,
+        prefix=resolved_config.api_prefix,
+    )
+
+    # Agent execution endpoint.
+    app.include_router(
+        agent_router,
+        prefix=resolved_config.api_prefix,
+    )
+
+    @app.get(
+        "/",
+        tags=["service"],
+        summary="Service metadata",
+    )
+    async def service_root() -> dict[str, Any]:
+        """Return public service metadata."""
+
+        return {
+            "service": resolved_config.service_name,
+            "version": resolved_config.service_version,
+            "environment": resolved_config.environment,
+            "api_prefix": resolved_config.api_prefix,
+            "docs_enabled": resolved_config.expose_docs,
+        }
+
+    @app.middleware("http")
+    async def security_headers(request: Request, call_next):
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["Referrer-Policy"] = "no-referrer"
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; style-src 'self' 'unsafe-inline'; "
+            "script-src 'self' 'unsafe-inline'; connect-src 'self'; "
+            "frame-ancestors 'none'"
+        )
+        return response
+
+    @app.exception_handler(Exception)
+    async def unhandled_exception_handler(
+        request: Request,
+        exc: Exception,
+    ) -> JSONResponse:
+        """Return a sanitized response for unexpected service failures."""
+
+        del request
+
+        log_event(
+            "unhandled_exception",
+            exception_type=type(exc).__name__,
+        )
+
+        payload = ErrorResponse(
+            error="Internal service error.",
+            request_id=get_request_id(),
+        )
+
+        return JSONResponse(
+            status_code=500,
+            content=payload.model_dump(),
+        )
+
+    return app
+
+
+app = create_app()

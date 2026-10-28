@@ -1,0 +1,149 @@
+{
+  "name": "enterpriseiq-enterprise-retrieval-gold",
+  "version": "1.0.0",
+  "metadata": {
+    "relevance_unit": "document",
+    "corpus": "NexaCorp Technologies enterprise knowledge base",
+    "purpose": "Offline retrieval evaluation",
+    "judgment_scale": "1=relevant, 2=highly relevant"
+  },
+  "queries": [
+    {
+      "query_id": "Q001",
+      "query": "How many days per week can employees work remotely?",
+      "category": "HR",
+      "judgments": [
+        {"document_id": "HR-003", "relevance": 2}
+      ],
+      "metadata": {"intent": "remote_work_allowance"}
+    },
+    {
+      "query_id": "Q002",
+      "query": "What is the company leave policy for employees?",
+      "category": "HR",
+      "judgments": [
+        {"document_id": "HR-002", "relevance": 2},
+        {"document_id": "HR-001", "relevance": 1}
+      ],
+      "metadata": {"intent": "leave_policy"}
+    },
+    {
+      "query_id": "Q003",
+      "query": "What are the rules for employee business travel?",
+      "category": "HR",
+      "judgments": [
+        {"document_id": "HR-004", "relevance": 2}
+      ],
+      "metadata": {"intent": "business_travel"}
+    },
+    {
+      "query_id": "Q004",
+      "query": "At what expense amount is a receipt required for reimbursement?",
+      "category": "Finance",
+      "judgments": [
+        {"document_id": "FIN-001", "relevance": 2}
+      ],
+      "metadata": {"intent": "expense_receipt_threshold"}
+    },
+    {
+      "query_id": "Q005",
+      "query": "Who must approve an expense claim above INR 50,000?",
+      "category": "Finance",
+      "judgments": [
+        {"document_id": "FIN-001", "relevance": 2}
+      ],
+      "metadata": {"intent": "expense_approval"}
+    },
+    {
+      "query_id": "Q006",
+      "query": "What is the process for purchasing goods or services?",
+      "category": "Finance",
+      "judgments": [
+        {"document_id": "FIN-002", "relevance": 2}
+      ],
+      "metadata": {"intent": "procurement"}
+    },
+    {
+      "query_id": "Q007",
+      "query": "How are company budgets approved?",
+      "category": "Finance",
+      "judgments": [
+        {"document_id": "FIN-003", "relevance": 2}
+      ],
+      "metadata": {"intent": "budget_approval"}
+    },
+    {
+      "query_id": "Q008",
+      "query": "How do employees connect using the corporate VPN?",
+      "category": "IT",
+      "judgments": [
+        {"document_id": "IT-001", "relevance": 2}
+      ],
+      "metadata": {"intent": "vpn_access"}
+    },
+    {
+      "query_id": "Q009",
+      "query": "How can an employee request access to company software?",
+      "category": "IT",
+      "judgments": [
+        {"document_id": "IT-002", "relevance": 2}
+      ],
+      "metadata": {"intent": "software_access"}
+    },
+    {
+      "query_id": "Q010",
+      "query": "What should employees do when an IT incident occurs?",
+      "category": "IT",
+      "judgments": [
+        {"document_id": "IT-003", "relevance": 2}
+      ],
+      "metadata": {"intent": "it_incident"}
+    },
+    {
+      "query_id": "Q011",
+      "query": "What should I do if I discover a security incident?",
+      "category": "Security",
+      "judgments": [
+        {"document_id": "SEC-001", "relevance": 2}
+      ],
+      "metadata": {"intent": "security_incident"}
+    },
+    {
+      "query_id": "Q012",
+      "query": "How does the company classify sensitive information?",
+      "category": "Security",
+      "judgments": [
+        {"document_id": "SEC-002", "relevance": 2},
+        {"document_id": "SEC-001", "relevance": 1}
+      ],
+      "metadata": {"intent": "data_classification"}
+    },
+    {
+      "query_id": "Q013",
+      "query": "What are acceptable ways to use company technology and systems?",
+      "category": "Security",
+      "judgments": [
+        {"document_id": "SEC-003", "relevance": 2}
+      ],
+      "metadata": {"intent": "acceptable_use"}
+    },
+    {
+      "query_id": "Q014",
+      "query": "What is the process for managing third-party vendors?",
+      "category": "Operations",
+      "judgments": [
+        {"document_id": "OPS-001", "relevance": 2}
+      ],
+      "metadata": {"intent": "vendor_management"}
+    },
+    {
+      "query_id": "Q015",
+      "query": "What is the response target for a P1 enterprise service incident?",
+      "category": "Product",
+      "judgments": [
+        {"document_id": "PROD-001", "relevance": 2}
+      ],
+      "metadata": {"intent": "p1_sla"}
+    }
+  ]
+}

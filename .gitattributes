@@ -1,0 +1,2 @@
+# Preserve byte-exact vector index contents; its SHA-256 manifest validates raw file bytes.
+data/processed/vector_index.jsonl -text

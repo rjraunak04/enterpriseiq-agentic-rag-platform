@@ -1,0 +1,139 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - "feature/**"
+    tags:
+      - "v*"
+  pull_request:
+    branches:
+      - main
+      - develop
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: Python quality gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install project
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Ruff
+        run: ruff check .
+
+      - name: Test suite
+        run: pytest -q
+
+      - name: Compile package
+        run: python -m compileall -q src
+
+  container:
+    name: Container runtime smoke test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: quality
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build image
+        run: docker build -t enterpriseiq:ci .
+
+      - name: Start container
+        run: docker run -d --name enterpriseiq-ci -p 8000:8000 enterpriseiq:ci
+
+      - name: Wait for agent readiness
+        run: |
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:8000/v1/ready; then
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs enterpriseiq-ci
+          exit 1
+
+      - name: Verify production docs policy
+        run: test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8000/docs)" = "404"
+
+      - name: Verify agent query
+        run: |
+          response="$(curl --fail --silent --show-error \
+            -H 'Content-Type: application/json' \
+            -d '{"query":"What is the remote work policy?"}' \
+            http://127.0.0.1:8000/v1/agent)"
+          echo "$response"
+          RESPONSE="$response" python -c "import json, os; payload=json.loads(os.environ['RESPONSE']); assert isinstance(payload.get('answer'), str) and payload['answer'].strip(), payload"
+
+      - name: Show logs on failure
+        if: failure()
+        run: docker logs enterpriseiq-ci
+
+  publish-image:
+    name: Publish verified image to GitHub Container Registry
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs:
+      - quality
+      - container
+    if: github.event_name == 'push'
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set lowercase image name
+        id: image
+        shell: bash
+        run: echo "name=ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate image tags
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ steps.image.outputs.name }}
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=ref,event=branch
+            type=ref,event=tag
+            type=sha
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}

@@ -1,0 +1,91 @@
+"""Agentic execution primitives for EnterpriseIQ."""
+
+from enterpriseiq.agent.execution import (
+    SafeToolExecutor,
+    ToolExecutionConfig,
+    ToolExecutionError,
+    ToolExecutionRejectedError,
+    execute_tool,
+)
+from enterpriseiq.agent.knowledge_tools import (
+    EnterpriseKnowledgeTools,
+    KnowledgeRetriever,
+    KnowledgeToolError,
+)
+from enterpriseiq.agent.models import (
+    AgentContractError,
+    AgentDecision,
+    AgentQuery,
+    AgentResponse,
+    AgentStatus,
+    AgentStep,
+    AgentTrace,
+    DecisionType,
+    ToolCall,
+    ToolExecutionStatus,
+    ToolResult,
+)
+from enterpriseiq.agent.orchestrator import (
+    AgenticRAGOrchestrator,
+    AgentOrchestrationError,
+    AgentOrchestratorConfig,
+    RAGAnswerer,
+    run_agent,
+)
+from enterpriseiq.agent.routing import (
+    AgentRouter,
+    AgentRoutingError,
+    DeterministicAgentRouter,
+    RoutingConfig,
+)
+from enterpriseiq.agent.tools import (
+    ToolContext,
+    ToolDefinition,
+    ToolHandler,
+    ToolInputError,
+    ToolNotFoundError,
+    ToolParameter,
+    ToolRegistrationError,
+    ToolRegistry,
+    ToolRegistryError,
+)
+
+__all__ = [
+    "AgentContractError",
+    "AgentDecision",
+    "AgentOrchestrationError",
+    "AgentOrchestratorConfig",
+    "AgentQuery",
+    "AgentResponse",
+    "AgentRouter",
+    "AgentRoutingError",
+    "AgentStatus",
+    "AgentStep",
+    "AgentTrace",
+    "AgenticRAGOrchestrator",
+    "DecisionType",
+    "DeterministicAgentRouter",
+    "EnterpriseKnowledgeTools",
+    "KnowledgeRetriever",
+    "KnowledgeToolError",
+    "RAGAnswerer",
+    "RoutingConfig",
+    "SafeToolExecutor",
+    "ToolCall",
+    "ToolContext",
+    "ToolDefinition",
+    "ToolExecutionConfig",
+    "ToolExecutionError",
+    "ToolExecutionRejectedError",
+    "ToolExecutionStatus",
+    "ToolHandler",
+    "ToolInputError",
+    "ToolNotFoundError",
+    "ToolParameter",
+    "ToolRegistrationError",
+    "ToolRegistry",
+    "ToolRegistryError",
+    "ToolResult",
+    "execute_tool",
+    "run_agent",
+]
